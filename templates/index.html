@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Grid Mutual Authentication</title>
+  <style>
+    :root {
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --ink: #1b2430;
+      --muted: #6b7788;
+      --line: #e3e8ef;
+      --brand: #0f3d6e;
+      --brand-2: #1c6bb0;
+      --ok: #1e8e3e;
+      --bad: #d93025;
+      --warn: #e8710a;
+      --purple: #7b3fb5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    /* ---------- top banner ---------- */
+    header {
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      color: #fff;
+      padding: 28px 32px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: .3px; }
+    header p  { margin: 0; opacity: .85; font-size: 14px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+
+    /* ---------- cards ---------- */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(15, 61, 110, .08);
+      padding: 20px 22px;
+      margin-bottom: 22px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 17px;
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2::before {
+      content: "";
+      width: 4px; height: 18px;
+      background: var(--brand-2);
+      border-radius: 2px;
+    }
+
+    /* ---------- result message ---------- */
+    .msg {
+      background: #fff8e1;
+      border-left: 5px solid #f4b400;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 22px;
+      font-size: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+    }
+
+    /* ---------- stat cards ---------- */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .stat {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(15, 61, 110, .08);
+      padding: 14px 16px;
+      border-top: 4px solid var(--brand-2);
+    }
+    .stat .num { font-size: 28px; font-weight: 700; line-height: 1.1; }
+    .stat .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+    .stat.ok  { border-top-color: var(--ok); }     .stat.ok .num  { color: var(--ok); }
+    .stat.bad { border-top-color: var(--bad); }    .stat.bad .num { color: var(--bad); }
+    .stat.warn{ border-top-color: var(--warn); }   .stat.warn .num{ color: var(--warn); }
+    .stat.pur { border-top-color: var(--purple); } .stat.pur .num { color: var(--purple); }
+
+    /* ---------- parameter chips ---------- */
+    .params { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .param { background: #f1f5fa; border-radius: 8px; padding: 10px 14px; }
+    .param .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+    .param .v { font-size: 15px; font-weight: 600; color: var(--brand); margin-top: 2px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .two-col .card { margin-bottom: 22px; }
+
+    /* ---------- controls ---------- */
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .controls label { font-weight: 600; font-size: 14px; color: var(--muted); }
+    select {
+      padding: 9px 12px;
+      font-size: 14px;
+      border: 1px solid #c9d3e0;
+      border-radius: 8px;
+      background: #fff;
+    }
+    button {
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .15s, filter .15s;
+    }
+    button:hover  { filter: brightness(1.08); box-shadow: 0 4px 10px rgba(0,0,0,.18); }
+    button:active { transform: translateY(1px); }
+    .normal { background: var(--ok); }
+    .attack { background: var(--bad); }
+    .clear  { background: #5f6b7a; margin-left: auto; }
+
+    /* ---------- tables ---------- */
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th {
+      background: #f1f5fa;
+      color: var(--brand);
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--line);
+      white-space: nowrap;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    tbody tr:nth-child(even) { background: #fafbfd; }
+    tbody tr:hover { background: #eef5fc; }
+    .empty { text-align: center; color: var(--muted); padding: 18px; }
+    .mono { font-family: Consolas, "Courier New", monospace; color: var(--muted); }
+    .yes { color: var(--ok); font-weight: 700; }
+    .no  { color: var(--bad); font-weight: 700; }
+
+    /* ---------- status badges ---------- */
+    .badge {
+      display: inline-block;
+      padding: 3px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .s-success  { background: #e6f4ea; color: var(--ok); }
+    .s-failed   { background: #fce8e6; color: var(--bad); }
+    .s-replay   { background: #fef0e0; color: var(--warn); }
+    .s-tampered { background: #f1e7fa; color: var(--purple); }
+    .used   { background: #fce8e6; color: var(--bad); }
+    .unused { background: #e6f4ea; color: var(--ok); }
+
+    @media (max-width: 800px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 20px; }
+      header h1 { font-size: 21px; }
+      button { flex: 1 1 45%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Smart Grid Mutual Authentication</h1>
+    <p>Smart Meter &harr; Utility Server using SHA-256 and OTP</p>
+  </header>
+
+  <div class="container">
+
+    {% if msg %}<div class="msg">{{ msg }}</div>{% endif %}
+
+    <!-- ===== summary counters ===== -->
+    <div class="stats">
+      <div class="stat"><div class="num">{{ stats.total }}</div><div class="lbl">Total events</div></div>
+      <div class="stat ok"><div class="num">{{ stats.success }}</div><div class="lbl">Success</div></div>
+      <div class="stat bad"><div class="num">{{ stats.failed }}</div><div class="lbl">Failed</div></div>
+      <div class="stat warn"><div class="num">{{ stats.replay }}</div><div class="lbl">Replay blocked</div></div>
+      <div class="stat pur"><div class="num">{{ stats.tampered }}</div><div class="lbl">Tampered</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Attack Simulation</h2>
+      <form method="post" class="controls">
+        <label for="meter_id">Meter</label>
+        <select name="meter_id" id="meter_id">
+          {% for m in meters %}<option value="{{ m.meter_id }}">{{ m.meter_id }}</option>{% endfor %}
+        </select>
+        <button class="normal" formaction="/simulate/normal">Normal Session</button>
+        <button class="attack" formaction="/simulate/replay">Replay Attack</button>
+        <button class="attack" formaction="/simulate/wrong_key">Wrong Key Attack</button>
+        <button class="attack" formaction="/simulate/tampered">Tampered Data Attack</button>
+        <button class="clear" formaction="/clear"
+                onclick="return confirm('Delete all readings, logs, OTPs and nonces?');">Clear All Records</button>
+      </form>
+    </div>
+
+    <!-- ===== security parameters ===== -->
+    <div class="card">
+      <h2>Security Parameters</h2>
+      <div class="params">
+        {% for k, v in params %}
+        <div class="param"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Registered Meters</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Meter ID</th><th>Location</th><th>Secret Key (masked)</th></tr></thead>
+          <tbody>
+            {% for m in meters %}
+            <tr><td><b>{{ m.meter_id }}</b></td><td>{{ m.location }}</td>
+                <td class="mono">{{ m.secret_key[:4] }}********</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Latest Meter Readings</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Meter ID</th><th>kWh</th><th>Voltage (V)</th><th>Received At</th></tr></thead>
+          <tbody>
+            {% for r in readings %}
+            <tr><td>{{ r.id }}</td><td><b>{{ r.meter_id }}</b></td><td>{{ r.kwh }}</td>
+                <td>{{ r.voltage }}</td><td class="mono">{{ r.received_at }}</td></tr>
+            {% else %}
+            <tr><td colspan="5" class="empty">No readings yet - click "Normal Session".</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== per-reading security details ===== -->
+    <div class="card">
+      <h2>Reading Verification Details</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Meter</th><th>Meter Timestamp</th><th>Delay (s)</th>
+                 <th>Within <span class="mono">30 s</span></th><th>OTP</th>
+                 <th>Hash Sent</th><th>Hash Expected</th><th>Hash Match</th><th>Result</th></tr></thead>
+          <tbody>
+            {% for d in details %}
+            <tr>
+              <td>{{ d.id }}</td>
+              <td><b>{{ d.meter_id }}</b></td>
+              <td class="mono">{{ d.meter_ts | ts }}</td>
+              <td>{{ '%.3f' % d.delay if d.delay is not none else '-' }}</td>
+              <td>{% if d.delay is not none and d.delay <= 30 %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
+              <td class="mono">{{ d.otp }}</td>
+              <td class="mono" title="{{ d.sent_hash }}">{{ d.sent_hash[:12] }}&hellip;</td>
+              <td class="mono" title="{{ d.expected_hash or '' }}">{% if d.expected_hash %}{{ d.expected_hash[:12] }}&hellip;{% else %}-{% endif %}</td>
+              <td>{% if d.expected_hash %}{% if d.expected_hash == d.sent_hash %}<span class="yes">Match</span>{% else %}<span class="no">Mismatch</span>{% endif %}{% else %}-{% endif %}</td>
+              <td><span class="badge s-{{ d.status }}">{{ d.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="empty">No reading attempts yet - click "Normal Session".</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== OTP and nonce tables ===== -->
+    <div class="two-col">
+      <div class="card">
+        <h2>Recent OTPs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Meter</th><th>OTP</th><th>Issued</th><th>State</th></tr></thead>
+            <tbody>
+              {% for o in otps %}
+              <tr><td><b>{{ o.meter_id }}</b></td><td class="mono">{{ o.otp }}</td>
+                  <td class="mono">{{ o.created | ts }}</td>
+                  <td>{% if o.used %}<span class="badge used">used</span>{% else %}<span class="badge unused">unused</span>{% endif %}</td></tr>
+              {% else %}
+              <tr><td colspan="4" class="empty">No OTPs yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Nonces</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Meter</th><th>Nonce</th><th>Issued</th><th>State</th></tr></thead>
+            <tbody>
+              {% for n in nonces %}
+              <tr><td><b>{{ n.meter_id }}</b></td><td class="mono">{{ n.nonce }}</td>
+                  <td class="mono">{{ n.created | ts }}</td>
+                  <td>{% if n.used %}<span class="badge used">used</span>{% else %}<span class="badge unused">unused</span>{% endif %}</td></tr>
+              {% else %}
+              <tr><td colspan="4" class="empty">No nonces yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Authentication Log</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Meter ID</th><th>Time</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody>
+            {% for l in logs %}
+            <tr><td>{{ l.id }}</td><td><b>{{ l.meter_id }}</b></td><td class="mono">{{ l.log_time }}</td>
+                <td><span class="badge s-{{ l.status }}">{{ l.status }}</span></td>
+                <td>{{ l.detail }}</td></tr>
+            {% else %}
+            <tr><td colspan="5" class="empty">Log is empty.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
